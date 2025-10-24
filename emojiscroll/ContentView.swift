@@ -16,10 +16,8 @@ struct ContentView: View {
 		var cols: [[String]] = []
 		var icons: [String] = []
 		var sectionIndexes: [Int] = []
-		var reverseSectionIndexes: [Int: Int] = [:]
 
 		for category in catalog {
-			reverseSectionIndexes[cols.count] = sectionIndexes.count
 			sectionIndexes.append(cols.count)
 			icons.append(category.symbol)
 			var emojis = category.emojis
@@ -35,13 +33,11 @@ struct ContentView: View {
 		self.cols = cols
 		self.icons = icons
 		self.sectionIndexes = sectionIndexes
-		self.reverseSectionIndexes = reverseSectionIndexes
 	}
 
 	let cols: [[String]]
 	let icons: [String]
 	let sectionIndexes: [Int]
-	let reverseSectionIndexes: [Int: Int]
 
 	@State var active: Int = 0
 	@State var scroll: ScrollViewProxy?
@@ -63,11 +59,6 @@ struct ContentView: View {
 											Text(cols[colIdx][rowIdx])
 												.font(.system(size: 40))
 												.minimumScaleFactor(0.1)
-											if rowIdx == 0, let cat = reverseSectionIndexes[colIdx] {
-												Color.clear.task {
-													active = cat
-												}
-											}
 										}
 								}
 							}
@@ -78,6 +69,33 @@ struct ContentView: View {
 					.frame(height: 200)
 					.task {
 						self.scroll = scroll
+					}
+					.overlay {
+						GeometryReader { geo in
+							if #available(iOS 17.0, *) {
+								Color.clear.onChange(of: geo.frame(in: .global).minX) {
+									let offset = -$1
+									let col = Int(offset / cellSize + 0.5)
+									while active < icons.count - 1, sectionIndexes[active + 1] <= col {
+										active += 1
+									}
+									while active > 0, sectionIndexes[active - 1] >= col {
+										active -= 1
+									}
+								}
+							} else {
+								Color.clear.onChange(of: geo.frame(in: .global).minX) {
+									let offset = -$0
+									let col = Int(offset / cellSize + 0.5)
+									while active < icons.count - 1, sectionIndexes[active + 1] <= col {
+										active += 1
+									}
+									while active > 0, sectionIndexes[active - 1] >= col {
+										active -= 1
+									}
+								}
+							}
+						}
 					}
 				}
 			}
