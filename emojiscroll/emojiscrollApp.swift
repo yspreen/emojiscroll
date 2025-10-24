@@ -13,7 +13,7 @@ import SwiftUI
 struct emojiscrollApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+					EmojiCatalogView()
         }
     }
 }
