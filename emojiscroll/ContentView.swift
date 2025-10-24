@@ -40,7 +40,8 @@ struct ContentView: View {
 	let sectionIndexes: [Int]
 
 	@State var active: Int = 0
-	@State var scroll: ScrollViewProxy?
+	@State var shouldScrollTo: Int?
+	@State var shouldScrollToChanges = 0
 
 	var cellSize: CGFloat {
 		CGFloat(200 / rowCount)
@@ -68,8 +69,11 @@ struct ContentView: View {
 					}
 					.frame(height: 200)
 					.task {
-						self.scroll = scroll
+						if let idx = shouldScrollTo {
+							scroll.scrollTo("col.\(sectionIndexes[idx])", anchor: .leading)
+						}
 					}
+					.id(shouldScrollToChanges)
 					.overlay {
 						GeometryReader { geo in
 							if #available(iOS 17.0, *) {
@@ -103,9 +107,8 @@ struct ContentView: View {
 				ForEach(Array(0..<icons.count), id: \.self) { idx in
 					Spacer()
 					Button {
-						withAnimation(.linear(duration: 0.1)) {
-							scroll?.scrollTo("col.\(sectionIndexes[idx])", anchor: .leading)
-						}
+						shouldScrollTo = idx
+						shouldScrollToChanges += 1
 					} label: {
 						Image(systemName: icons[idx])
 							.opacity(idx == active ? 1 : 0.3)
